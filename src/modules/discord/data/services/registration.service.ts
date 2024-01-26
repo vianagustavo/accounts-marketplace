@@ -19,7 +19,10 @@ export class BaseInfoCommand {
   onRegistration(
     @InteractionEvent(SlashCommandPipe) options: ChatInputCommandInteraction,
   ): string {
-    this.registrationService.startRegistration(options.user.id);
+    this.registrationService.startRegistration(
+      options.user.id,
+      '1200235253353160807',
+    );
 
     return 'loro';
   }

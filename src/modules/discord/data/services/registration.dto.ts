@@ -1,7 +1,7 @@
 import { InjectDiscordClient } from '@discord-nestjs/core';
 import { Injectable } from '@nestjs/common';
 
-import { Client, TextChannel } from 'discord.js';
+import { Client, TextChannel, Message, APIEmbed } from 'discord.js';
 
 @Injectable()
 export class RegistrationService {
@@ -18,57 +18,79 @@ export class RegistrationService {
     });
   }
 
-  private handleRegistrationMessage(message) {
-    if (!message.author.bot) {
-      const registrationState = this.registrationStates.get(message.author.id);
+  private async handleRegistrationMessage(message: Message) {
+    if (message.author.bot) return;
 
-      if (registrationState) {
-        switch (registrationState.step) {
-          case 1:
-            registrationState.data = message.content;
-            registrationState.step = 2;
-            message.reply(
-              `Thanks, ${registrationState.data}! What is your age?`,
-            );
-            break;
+    const registrationState = this.registrationStates.get(message.author.id);
 
-          case 2:
-            registrationState.data = message.content;
-            registrationState.step = 3;
-            message.reply(`Great! What city are you from?`);
-            break;
+    console.log({ registrationState });
 
-          case 3:
-            registrationState.data = message.content;
-            this.registrationStates.delete(message.author.id);
-            message.reply('Thank you for registering!');
-            break;
+    if (registrationState) {
+      switch (registrationState.step) {
+        case 0:
+          this.startRegistration(message.author.id, message.channelId);
+          break;
 
-          default:
-            break;
-        }
+        case 1:
+          registrationState.data = message.content;
+          registrationState.step = 2;
+          await this.sendEmbed(
+            message.author.id,
+            message.channelId,
+            'Thanks for providing your name!',
+            'What is your age?',
+          );
+          break;
+
+        case 2:
+          registrationState.data = message.content;
+          registrationState.step = 3;
+          await this.sendEmbed(
+            message.author.id,
+            message.channelId,
+            `Great! You are ${registrationState.data} years old.`,
+            'What city are you from?',
+          );
+          break;
+
+        case 3:
+          registrationState.data = message.content;
+          this.registrationStates.delete(message.author.id);
+          await this.sendEmbed(
+            message.author.id,
+            message.channelId,
+            'teste',
+            `Thank you for registering! You are from ${registrationState.data}.`,
+          );
+          break;
+
+        default:
+          break;
       }
     }
   }
 
-  public startRegistration(userId: string) {
+  public startRegistration(userId: string, channelId: string) {
     if (!this.registrationStates.has(userId)) {
       this.registrationStates.set(userId, {
         step: 1,
         data: '',
       });
 
-      this.sendTaggedMessage(
+      this.sendEmbed(
         userId,
-        "Welcome! Let's start the registration process. What is your name?",
-        '1200412884413456504',
+        channelId,
+        "Welcome! Let's start the registration process.",
+        'What is your name?',
       );
     }
   }
-  private sendTaggedMessage(
+
+  private async sendEmbed(
     userId: string,
-    message: string,
     channelId: string,
+    title: string,
+    description: string,
   ) {
     const member = this.client.guilds.cache
       .get('1200235252916957324')
@@ -80,7 +102,66 @@ export class RegistrationService {
       ) as TextChannel;
 
       if (targetChannel) {
-        targetChannel.send(`${member.user}, ${message}`);
+        const embed: APIEmbed = {
+          title: title,
+          description: description,
+          color: 2525,
+        };
+
+        const button = {
+          type: 1,
+          components: [
+            {
+              type: 2,
+              style: 1,
+              label: 'Enviar',
+              custom_id: 'send_application',
+            },
+          ],
+        };
+
+        await targetChannel.send({
+          embeds: [embed],
+          components: [button],
+        });
+
+        // Await user response
+        const collector = targetChannel.createMessageCollector({
+          filter: (response) => response.author.id === userId,
+          time: 60000, // Set a timeout for user response (60 seconds in this example)
+        });
+
+        collector.on('collect', async (response) => {
+          await this.handleUserResponse(userId, response.content);
+
+          collector.stop();
+        });
+      }
+    }
+  }
+
+  private async handleUserResponse(userId: string, response: string) {
+    const registrationState = this.registrationStates.get(userId);
+
+    if (registrationState) {
+      switch (registrationState.step) {
+        case 1:
+          registrationState.data = response;
+          registrationState.step = 2;
+          break;
+
+        case 2:
+          registrationState.data = response;
+          registrationState.step = 3;
+          break;
+
+        case 3:
+          registrationState.data = response;
+          this.registrationStates.delete(userId);
+          break;
+
+        default:
+          break;
       }
     }
   }
