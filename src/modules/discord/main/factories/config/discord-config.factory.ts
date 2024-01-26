@@ -9,7 +9,6 @@ import { GatewayIntentBits, Partials } from 'discord.js';
 @Injectable()
 export class DiscordConfigFactory implements DiscordOptionsFactory {
   createDiscordOptions(): DiscordModuleOption {
-    console.log(process.env.DISCORD_TOKEN);
     return {
       token: process.env.DISCORD_TOKEN,
       discordClientOptions: {
