@@ -12,7 +12,12 @@ export class DiscordConfigFactory implements DiscordOptionsFactory {
     return {
       token: process.env.DISCORD_TOKEN,
       discordClientOptions: {
-        intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+        intents: [
+          GatewayIntentBits.Guilds,
+          GatewayIntentBits.GuildMessages,
+          GatewayIntentBits.MessageContent,
+          GatewayIntentBits.DirectMessages,
+        ],
         partials: [
           Partials.Channel,
           Partials.GuildMember,

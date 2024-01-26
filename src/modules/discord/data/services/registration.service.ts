@@ -2,14 +2,15 @@ import { Command, InteractionEvent, Handler } from '@discord-nestjs/core';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { Injectable, Inject } from '@nestjs/common';
 import { RegistrationService } from './registration.dto';
-import { ChatInputCommandInteraction } from 'discord.js';
+import { APIEmbed, ChatInputCommandInteraction } from 'discord.js';
 
 @Command({
   name: 'reg',
-  description: 'User registration',
+  description: 'Anúncio de conta',
 })
 @Injectable()
 export class BaseInfoCommand {
+  private readonly allowedChannelId = '1200235253353160807';
   constructor(
     @Inject(RegistrationService)
     private readonly registrationService: RegistrationService,
@@ -19,11 +20,13 @@ export class BaseInfoCommand {
   onRegistration(
     @InteractionEvent(SlashCommandPipe) options: ChatInputCommandInteraction,
   ): string {
-    this.registrationService.startRegistration(
-      options.user.id,
-      '1200235253353160807',
-    );
+    if (options.channelId === this.allowedChannelId) {
+      this.registrationService.startRegistration(
+        options.user.id,
+        options.channelId,
+      );
 
-    return 'loro';
+      return '**O nosso bot irá te enviar uma mensagem privada.\n Siga as instruções para finalizar o seu anúncio.**';
+    }
   }
 }
