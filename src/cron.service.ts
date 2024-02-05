@@ -1,4 +1,3 @@
-// cron.service.ts
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
@@ -7,6 +6,7 @@ import axios from 'axios';
 export class CronService {
   @Cron(CronExpression.EVERY_MINUTE)
   async performHealthCheck(): Promise<void> {
+    console.log('chamou');
     try {
       const response = await axios.get(
         'https://accounts-marketplace.onrender.com/health',
