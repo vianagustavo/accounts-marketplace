@@ -3,6 +3,7 @@ import { AccountsDiscordModule } from './modules/discord/discord.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { HealthController } from './health.controller';
+import { CronService } from './cron.service';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { HealthController } from './health.controller';
     AccountsDiscordModule,
   ],
   controllers: [HealthController],
-  providers: [],
+  providers: [CronService],
 })
 export class AppModule {}
